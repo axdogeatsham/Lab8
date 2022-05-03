@@ -1,0 +1,62 @@
+module Datapath_Testbench;
+
+
+reg clk;
+reg rst;
+reg ALUsrc; //alu_m
+reg PCsrc;
+reg RegRW; //RW
+reg [3:0] ALUop;
+reg Mem_W_R;
+reg WB;
+reg Cin; //C0
+reg [1:0]imm_sel;
+
+wire [31:0]instrCU;
+wire [3:0] Status;
+wire [31:0]Final_out;
+
+Datapath dut(.clk(clk), .rst(rst), .ALUsrc(ALUsrc), .PCsrc(PCsrc), .RegRW(RegRW), .ALUop(ALUop), .Mem_W_R(Mem_W_R), .WB(WB), .Cin(Cin), .imm_sel(imm_sel), .instrCU(instrCU), .Status(Status), .Final_out(Final_out));
+
+initial begin
+	
+	clk = 0;
+end
+
+always
+	#5 clk <= ~clk;
+	
+initial begin
+	rst = 1;
+	#10;
+	rst = 0;
+	#10
+	Cin = 0;
+	RegRW = 1;
+	ALUop = 0000;
+	Mem_W_R = 1;
+	ALUsrc = 1;
+	imm_sel = 00;
+	WB = 1;
+	PCsrc = 0;
+	#10;
+	Cin = 0;
+	RegRW = 1;
+	ALUop = 0000;
+	Mem_W_R = 1;
+	ALUsrc = 1;
+	imm_sel = 00;
+	WB = 1;
+	PCsrc = 0;	
+	#10
+	Cin = 0;
+	RegRW = 1;
+	ALUop = 0000;
+	Mem_W_R = 1;
+	ALUsrc = 0;
+	imm_sel = 00;
+	WB = 1;
+	PCsrc = 0;
+end
+
+endmodule
