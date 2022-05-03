@@ -1,0 +1,81 @@
+module Datapath ( clk,rst, Cin, ALUsrc, RegRW, PCsrc, ALUop, Mem_W_R, WB, imm_sel ,instrCU, Status, Final_out);
+
+input clk;
+input rst;
+input ALUsrc;
+input PCsrc;
+input RegRW;
+input [3:0] ALUop;
+input Mem_W_R;
+input WB;
+input Cin;
+input [1:0]imm_sel;
+
+// ask about how the ALU op code is 4 bits but when sending to datapath the ALU takes in 3 bits
+
+output [31:0]instrCU;
+output [3:0] Status;
+output [31:0] Final_out;
+
+
+//PC
+wire [31:0]pc_out;
+wire [31:0]pc_in;
+PC run0(clk, rst, pc_in, pc_out);
+
+//add
+wire [31:0] pc_add;
+PCAdder run1 (pc_out, pc_add);
+
+
+
+//Rom & ID
+wire [31:0]instruction;
+wire [4:0] RD, RS1, RS2;
+wire [31:0] instr;
+
+ROM run4(pc_out, instruction);
+
+ID run5(instruction, RD, RS1, RS2, instr);
+assign instrCU = instr;
+
+//Registers File
+wire [31:0] Rout1;
+wire [31:0] Rout2;
+RegisterFile run6( clk, rst, RegRW , RD, RS1, RS2, Rout1, Rout2 );
+
+// Imm-Gen
+wire [31:0] new_IMM;
+wire [31:0] out_add;
+Imm_gen run7 (instr,imm_sel);
+
+Add_Sum run2(pc_out, new_IMM ,out_add );
+
+Mux_32_2to1 run3(out_add, pc_add, PCsrc, pc_in);
+
+//Mux2to1 to ALU
+wire [31:0]new_Rout2;
+Mux_32_2to1 run8 (Rout2, new_IMM, ALUsrc, new_Rout2);
+
+
+//ALU figure out op code why is it 4 bits when the orginal ALU is taking in 3
+wire [31:0]ALU_res;
+wire [1:0] Status1;
+wire [1:0] Status2;
+ALU run9 (Rout1, new_Rout2 , Cin , ALUop, ALU_res ,Status1, Status2);
+
+//assign Status[1:0] = Status1;
+//assign Status[3:2] = Status2;
+
+assign Status = {Status2, Status1};
+
+//ROM
+wire [31:0] read_data;
+RAM256to32 run10 (Rout2, ALU_res,Mem_W_R, clk, read_data);
+wire [31:0] wData;
+
+Mux_32_2to1 run11 (read_data, ALU_res, WB, wData);
+
+assign Final_out = wData;
+
+endmodule
